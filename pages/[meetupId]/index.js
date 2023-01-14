@@ -1,58 +1,61 @@
-import { MongoClient, ObjectId } from "mongodb";
-import Head from "next/head";
-import { Fragment } from "react";
+import { MongoClient, ObjectId } from 'mongodb';
+import { Fragment } from 'react';
+import Head from 'next/head';
 
-import MeetupDetail from "../../components/meetups/MeetupDetail";
+import MeetupDetail from '../../components/meetups/MeetupDetail';
 
-const MeetupDetails = (props) => {
+function MeetupDetails(props) {
   return (
-   <Fragment>
-    <Head>
+    <Fragment>
+      <Head>
         <title>{props.meetupData.title}</title>
-        <meta name="description" content={props.meetupData.description}/>
-    </Head>
-    <MeetupDetail
-      title={props.meetupData.title}
-      id={props.meetupData.id}
-      description={props.meetupData.description}
-      address={props.meetupData.address}
-      image={props.meetupData.image}
-    />
+        <meta name='description' content={props.meetupData.description} />
+      </Head>
+      <MeetupDetail
+        image={props.meetupData.image}
+        title={props.meetupData.title}
+        address={props.meetupData.address}
+        description={props.meetupData.description}
+      />
     </Fragment>
   );
-};
+}
 
-export const getStaticPaths = async () => {
+export async function getStaticPaths() {
   const client = await MongoClient.connect(
     "mongodb+srv://zakyymuh:zdVGE8SbVFomwAm6@react-course.05ws9xx.mongodb.net/meetups?retryWrites=true&w=majority"
   );
   const db = client.db();
 
-  const meetupsCollection = db.collection("meetups");
+  const meetupsCollection = db.collection('meetups');
 
   const meetups = await meetupsCollection.find({}, { _id: 1 }).toArray();
 
-  return {
-    fallback: true,
-    paths: meetups.map((meetup) => ({ params: { meetupId: meetup._id.toString() } })),
-  };
-};
+  client.close();
 
-export const getStaticProps = async (context) => {
+  return {
+    fallback: 'blocking',
+    paths: meetups.map((meetup) => ({
+      params: { meetupId: meetup._id.toString() },
+    })),
+  };
+}
+
+export async function getStaticProps(context) {
+  // fetch data for a single meetup
+
   const meetupId = context.params.meetupId;
-console.log(meetupId);
+
   const client = await MongoClient.connect(
     "mongodb+srv://zakyymuh:zdVGE8SbVFomwAm6@react-course.05ws9xx.mongodb.net/meetups?retryWrites=true&w=majority"
   );
   const db = client.db();
 
-  const meetupsCollection = db.collection("meetups");
+  const meetupsCollection = db.collection('meetups');
 
   const selectedMeetup = await meetupsCollection.findOne({
     _id: ObjectId(meetupId),
   });
-
-  console.log(selectedMeetup);
 
   client.close();
 
@@ -61,12 +64,12 @@ console.log(meetupId);
       meetupData: {
         id: selectedMeetup._id.toString(),
         title: selectedMeetup.title,
-        description: selectedMeetup.description,
-        image: selectedMeetup.image,
         address: selectedMeetup.address,
+        image: selectedMeetup.image,
+        description: selectedMeetup.description,
       },
     },
   };
-};
+}
 
 export default MeetupDetails;
